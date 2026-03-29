@@ -26,10 +26,15 @@ return function(wezterm, config)
 	      },
 	    },
 	    { key = 'Enter',      mods = 'CTRL',  action = wezterm.action.ToggleFullScreen },
-    { key = 'Enter',      mods = 'ALT',   action = wezterm.action.DisableDefaultAssignment },
+	    -- Bash-specific multiline experiment:
+	    -- { key = 'Enter',      mods = 'SHIFT', action = act.SendString '\x16\x0a' },
+	    { key = 'Enter',      mods = 'SHIFT', action = act.SendString '\x0a' },
+	    { key = 'Enter',      mods = 'ALT',   action = wezterm.action.DisableDefaultAssignment },
     { key = 's',          mods = 'CTRL|ALT', action = act({ EmitEvent = "save_session" }) },
-    { key = 'r',          mods = 'CTRL|ALT', action = act({ EmitEvent = "restore_session" }) },
-    { key = 'l',          mods = 'CTRL|ALT', action = act({ EmitEvent = "load_session" }) },
+	    -- Plugin-native restore_session restores into the current window and leaves
+	    -- the startup codex window behind. Use our wrapper instead.
+	    { key = 'r',          mods = 'CTRL|ALT', action = act({ EmitEvent = "ouroboros_restore_session" }) },
+	    { key = 'l',          mods = 'CTRL|ALT', action = act({ EmitEvent = "ouroboros_load_session" }) },
     {
       key = '$',
       mods = 'CTRL|SHIFT',

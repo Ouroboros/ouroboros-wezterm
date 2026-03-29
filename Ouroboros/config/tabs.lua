@@ -101,19 +101,6 @@ return function(wezterm, config)
 		return string.format("%d: %s", tab.tab_index + 1, title)
 	end
 
-	local function centered_title(text, width)
-		text = wezterm.truncate_right(text, width)
-		local text_width = wezterm.column_width(text)
-		if text_width >= width then
-			return text
-		end
-
-		local pad_total = width - text_width
-		local pad_left = math.floor(pad_total / 2)
-		local pad_right = pad_total - pad_left
-		return string.rep(" ", pad_left) .. text .. string.rep(" ", pad_right)
-	end
-
 	local function has_unseen_output(tab)
 		for _, pane in ipairs(tab.panes) do
 			if pane.has_unseen_output then
@@ -143,7 +130,6 @@ return function(wezterm, config)
 
 		-- Original custom UI path:
 
-		local fixed_width = math.max(8, math.min(config.tab_max_width or 18, max_width))
 		local text_color, edge_color, unseen_color = state_colors(tab, hover)
 		local process_name = ""
 		-- if ENABLE_DYNAMIC_TAB_TITLE then
@@ -158,33 +144,40 @@ return function(wezterm, config)
 			{ Foreground = { Color = text_color.fg } },
 		}
 		local title = tab_title(tab)
-		local inset = 6
+		local left_width = wezterm.column_width(LEFT)
+		local right_width = wezterm.column_width(RIGHT)
+		local prefix_text = ""
+		local suffix_text = " "
 
 		if ENABLE_DYNAMIC_TAB_TITLE and process_name:match("^wsl") then
-			table.insert(items, { Text = "" .. LINUX })
-			inset = 8
+			prefix_text = LINUX
+			table.insert(items, { Text = prefix_text })
 		elseif tab.active_pane.title:match("^Administrator: ") or tab.active_pane.title:match("%(Admin%)") then
-			table.insert(items, { Text = "" .. ADMIN })
-			inset = 8
+			prefix_text = ADMIN
+			table.insert(items, { Text = prefix_text })
 		end
 
 		if has_unseen_output(tab) and not tab.is_active then
-			inset = inset + 2
+			suffix_text = " " .. UNSEEN
 		end
 
-		local title_width = math.max(1, fixed_width - inset)
-		title = centered_title(title, title_width)
+		local inset = left_width
+			+ right_width
+			+ wezterm.column_width(prefix_text)
+			+ wezterm.column_width(suffix_text)
+		local title_width = math.max(1, max_width - inset)
+		title = wezterm.truncate_right(title, title_width)
 		table.insert(items, { Attribute = { Intensity = "Bold" } })
 		table.insert(items, { Text = "" .. title })
 
 		if has_unseen_output(tab) and not tab.is_active then
 			table.insert(items, { Background = { Color = unseen_color.bg } })
 			table.insert(items, { Foreground = { Color = unseen_color.fg } })
-			table.insert(items, { Text = " " .. UNSEEN })
+			table.insert(items, { Text = suffix_text })
 		else
 			table.insert(items, { Background = { Color = text_color.bg } })
 			table.insert(items, { Foreground = { Color = text_color.fg } })
-			table.insert(items, { Text = " " })
+			table.insert(items, { Text = suffix_text })
 		end
 
 		table.insert(items, { Background = { Color = edge_color.bg } })

@@ -27,7 +27,7 @@ return function(wezterm, config)
 	config.enable_tab_bar = true
 	config.use_fancy_tab_bar = true
 	config.hide_tab_bar_if_only_one_tab = false
-	config.tab_max_width = 30
+		config.tab_max_width = 50
 	config.show_tab_index_in_tab_bar = false
 
 	config.command_palette_fg_color = ui.mocha.lavender
