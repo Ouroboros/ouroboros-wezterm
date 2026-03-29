@@ -205,7 +205,6 @@ end
 
 function ui.background_layers()
 	local images = load_backdrops()
-	images = {}
 	if #images == 0 then
 		selected_backdrop = nil
 		return {

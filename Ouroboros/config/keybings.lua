@@ -15,9 +15,17 @@ return function(wezterm, config)
         end
       end),
     },
-    { key = 'v',          mods = 'CTRL',  action = act.PasteFrom 'Clipboard' },
-    { key = 'w',          mods = 'CTRL',  action = act.CloseCurrentTab { confirm = false } },
-    { key = 'Enter',      mods = 'CTRL',  action = wezterm.action.ToggleFullScreen },
+	    { key = 'v',          mods = 'CTRL',  action = act.PasteFrom 'Clipboard' },
+	    { key = 'w',          mods = 'CTRL',  action = act.CloseCurrentTab { confirm = false } },
+	    {
+	      key = 'l',
+	      mods = 'CTRL',
+	      action = act.Multiple {
+	        act.ClearScrollback 'ScrollbackAndViewport',
+	        act.SendKey { key = 'l', mods = 'CTRL' },
+	      },
+	    },
+	    { key = 'Enter',      mods = 'CTRL',  action = wezterm.action.ToggleFullScreen },
     { key = 'Enter',      mods = 'ALT',   action = wezterm.action.DisableDefaultAssignment },
     { key = 's',          mods = 'CTRL|ALT', action = act({ EmitEvent = "save_session" }) },
     { key = 'r',          mods = 'CTRL|ALT', action = act({ EmitEvent = "restore_session" }) },
