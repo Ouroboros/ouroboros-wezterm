@@ -1,6 +1,4 @@
 return function(wezterm, config)
-	-- if true then return end
-
 	local ui = require("config.ui")
 	local nf = wezterm.nerdfonts
 	local LEFT = nf.ple_left_half_circle_thick
@@ -95,7 +93,6 @@ return function(wezterm, config)
 		local pane_title = tab.active_pane.title or ""
 		local process_name = ui.clean_process_name(tab.active_pane.foreground_process_name)
 		local cwd_name = nil
-		-- local cwd_name = cwd_name_from_value(tab.active_pane.current_working_dir)
 		local title = resolved_title(process_name, cwd_name, pane_title)
 
 		return string.format("%d: %s", tab.tab_index + 1, title)
@@ -123,18 +120,8 @@ return function(wezterm, config)
 	end
 
 	wezterm.on("format-tab-title", function(tab, _tabs, _panes, _config, hover, max_width)
-		-- Pure default-title debug path.
-		-- if true then
-		-- 	return tab.active_pane.title or "Terminal"
-		-- end
-
-		-- Original custom UI path:
-
 		local text_color, edge_color, unseen_color = state_colors(tab, hover)
 		local process_name = ""
-		-- if ENABLE_DYNAMIC_TAB_TITLE then
-		-- 	process_name = ui.clean_process_name(tab.active_pane.foreground_process_name)
-		-- end
 		local items = {
 			{ Background = { Color = edge_color.bg } },
 			{ Foreground = { Color = edge_color.fg } },

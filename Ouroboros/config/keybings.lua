@@ -26,8 +26,6 @@ return function(wezterm, config)
 	      },
 	    },
     { key = 'Enter',      mods = 'CTRL',  action = wezterm.action.ToggleFullScreen },
-	    -- Bash-specific multiline experiment:
-	    -- { key = 'Enter',      mods = 'SHIFT', action = act.SendString '\x16\x0a' },
 	    { key = 'Enter',      mods = 'SHIFT', action = act.SendString '\x0a' },
 	    { key = 'Enter',      mods = 'ALT',   action = wezterm.action.DisableDefaultAssignment },
     { key = 's',          mods = 'CTRL|ALT', action = act({ EmitEvent = "save_session" }) },
