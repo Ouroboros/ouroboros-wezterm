@@ -5,7 +5,6 @@ return function(wezterm, config)
 	local RIGHT = nf.ple_right_half_circle_thick
 	local ADMIN = nf.md_shield_half_full
 	local LINUX = nf.cod_terminal_linux
-	local UNSEEN = nf.md_numeric_1_box_multiple
 	local ENABLE_DYNAMIC_TAB_TITLE = false
 	local IGNORED_PROCESSES = {
 		wsl = true,
@@ -98,29 +97,20 @@ return function(wezterm, config)
 		return string.format("%d: %s", tab.tab_index + 1, title)
 	end
 
-	local function has_unseen_output(tab)
-		for _, pane in ipairs(tab.panes) do
-			if pane.has_unseen_output then
-				return true
-			end
-		end
-		return false
-	end
-
 	local function state_colors(tab, hover)
 		if tab.is_active then
-			return ui.tab_colors.text_active, ui.tab_colors.scircle_active, ui.tab_colors.unseen_active
+			return ui.tab_colors.text_active, ui.tab_colors.scircle_active
 		end
 
 		if hover then
-			return ui.tab_colors.text_hover, ui.tab_colors.scircle_hover, ui.tab_colors.unseen_hover
+			return ui.tab_colors.text_hover, ui.tab_colors.scircle_hover
 		end
 
-		return ui.tab_colors.text_default, ui.tab_colors.scircle_default, ui.tab_colors.unseen_default
+		return ui.tab_colors.text_default, ui.tab_colors.scircle_default
 	end
 
 	wezterm.on("format-tab-title", function(tab, _tabs, _panes, _config, hover, max_width)
-		local text_color, edge_color, unseen_color = state_colors(tab, hover)
+		local text_color, edge_color = state_colors(tab, hover)
 		local process_name = ""
 		local items = {
 			{ Background = { Color = edge_color.bg } },
@@ -144,10 +134,6 @@ return function(wezterm, config)
 			table.insert(items, { Text = prefix_text })
 		end
 
-		if has_unseen_output(tab) and not tab.is_active then
-			suffix_text = " " .. UNSEEN
-		end
-
 		local inset = left_width
 			+ right_width
 			+ wezterm.column_width(prefix_text)
@@ -156,16 +142,9 @@ return function(wezterm, config)
 		title = wezterm.truncate_right(title, title_width)
 		table.insert(items, { Attribute = { Intensity = "Bold" } })
 		table.insert(items, { Text = "" .. title })
-
-		if has_unseen_output(tab) and not tab.is_active then
-			table.insert(items, { Background = { Color = unseen_color.bg } })
-			table.insert(items, { Foreground = { Color = unseen_color.fg } })
-			table.insert(items, { Text = suffix_text })
-		else
-			table.insert(items, { Background = { Color = text_color.bg } })
-			table.insert(items, { Foreground = { Color = text_color.fg } })
-			table.insert(items, { Text = suffix_text })
-		end
+		table.insert(items, { Background = { Color = text_color.bg } })
+		table.insert(items, { Foreground = { Color = text_color.fg } })
+		table.insert(items, { Text = suffix_text })
 
 		table.insert(items, { Background = { Color = edge_color.bg } })
 		table.insert(items, { Foreground = { Color = edge_color.fg } })
