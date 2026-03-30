@@ -1,5 +1,6 @@
 local wezterm = require("wezterm")
 local fs = require('fs')
+local tab_mod = require('tab')
 local win_mod = require('window')
 local utils = require('utils')
 
@@ -97,6 +98,48 @@ function pub.restore_workspace(window, dir, workspace_name)
     end
 
     return success, mismatches or {}
+end
+
+--- Restores all saved tabs from a workspace into the current window.
+--- Existing tabs are preserved.
+--- @param window wezterm.Window
+--- @param dir string
+--- @param workspace_name string
+--- @return boolean|nil, table
+function pub.restore_workspace_tabs(window, dir, workspace_name)
+    wezterm.log_info("Loading saved tabs into current window for workspace: " .. workspace_name)
+    local file_path = dir .. "wezterm_state_" .. fs.escape_file_name(workspace_name) .. ".json"
+
+    local workspace_data = fs.load_from_json_file(file_path)
+    if not workspace_data or not workspace_data.windows then
+        utils.notify(window, 'Workspace state file not found for workspace: ' .. workspace_name)
+        return nil, {}
+    end
+
+    local all_mismatches = {}
+    local active_tab
+
+    for _, win_data in ipairs(workspace_data.windows) do
+        if win_data.tabs then
+            for _, tab_data in ipairs(win_data.tabs) do
+                local tab, mismatches = tab_mod.restore_tab(window, tab_data)
+                if tab_data.is_active and active_tab == nil and tab ~= nil then
+                    active_tab = tab
+                end
+                if mismatches then
+                    for _, m in ipairs(mismatches) do
+                        table.insert(all_mismatches, m)
+                    end
+                end
+            end
+        end
+    end
+
+    if active_tab then
+        active_tab:activate()
+    end
+
+    return true, all_mismatches
 end
 
 --- Extracts the short directory name from a cwd URI.
@@ -233,7 +276,6 @@ end
 --- @param tab_idx number: The tab index (1-based).
 --- @return table: List of git branch mismatches.
 function pub.restore_single_tab(window, dir, workspace_name, win_idx, tab_idx)
-	local tab_mod = require("tab")
 	local file_path = dir .. "wezterm_state_" .. fs.escape_file_name(workspace_name) .. ".json"
 	local workspace_data = fs.load_from_json_file(file_path)
 	if not workspace_data then

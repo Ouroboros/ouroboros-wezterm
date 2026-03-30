@@ -39,16 +39,17 @@ function pub.restore_tab(window, tab_data)
 			return nil
 		end
 
-		-- Keep restored tabs on the live/default title path.
-		-- if tab_data.title then
-		-- 	new_tab:set_title(tab_data.title)
-		-- end
-
 		-- Activate the new tab before creating panes
 		new_tab:activate()
 
 		-- Recreate panes within this tab
 		mismatches = pub.restore_panes(window, new_tab, tab_data)
+
+		-- Trigger a prompt redraw so shell-driven titles refresh.
+		local active_pane = new_tab:active_pane()
+		if active_pane then
+			active_pane:send_text("\x0c")
+		end
 
 		return new_tab
 	end)

@@ -138,9 +138,9 @@ end
 --- Handles the second step: tab selection within a workspace.
 --- @param window any
 --- @param pane any
---- @param outer_pane any: The pane from the first selector (used for workspace switch).
+--- @param _outer_pane any
 --- @param workspace_name string
-local function show_tab_selector(window, pane, outer_pane, workspace_name)
+local function show_tab_selector(window, pane, _outer_pane, workspace_name)
 	local tab_choices = ws_mod.get_workspace_tabs(save_state_dir, workspace_name)
 	if #tab_choices == 0 then
 		window:toast_notification("WezTerm Sessions", "No data found for: " .. workspace_name, nil, 4000)
@@ -174,17 +174,28 @@ local function show_tab_selector(window, pane, outer_pane, workspace_name)
 					end
 					window:toast_notification("WezTerm Sessions", msg, nil, duration)
 				else
-					-- Full workspace load
+					-- Full workspace load: append saved tabs into the current window.
 					wezterm.emit("wezterm-sessions.load.start", id)
-					wezterm.log_info("Switching to ws: " .. id)
-					window:perform_action(
-						act.SwitchToWorkspace({
-							name = id,
-						}),
-						outer_pane
-					)
-					wezterm.sleep_ms(2000)
-					window:perform_action(act.EmitEvent("wezter-sessions-switch"), pane)
+					local success, mismatches = ws_mod.restore_workspace_tabs(window, save_state_dir, id)
+					wezterm.emit("wezterm-sessions.load.end", id)
+
+					if not success then
+						return
+					end
+
+					local config = pub.config or DEFAULTS
+					local msg = "Workspace tabs loaded into current window: " .. id .. "."
+					local duration = 4000
+					if config.git_branch_warn and mismatches and #mismatches > 0 then
+						local deduped = dedupe_mismatches(mismatches)
+						if #deduped > 0 then
+							msg = msg .. " " .. format_mismatch_message(deduped)
+							duration = 8000
+							wezterm.emit("wezterm-sessions.git.branch_mismatch", id, deduped)
+						end
+					end
+
+					window:toast_notification("WezTerm Sessions", msg, nil, duration)
 				end
 			end),
 			title = "Workspace: " .. workspace_name,
