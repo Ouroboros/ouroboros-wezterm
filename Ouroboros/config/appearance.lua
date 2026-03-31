@@ -1,7 +1,10 @@
 return function(wezterm, config)
 	local ui = require("config.ui")
 	local config_root = wezterm.config_dir:match("^(.*)[/\\][^/\\]+$") or wezterm.config_dir
-	local default_wsl_domain = "WSL:Ubuntu-22.04"
+	local default_wsl_domains = {
+		"WSL:Ubuntu-22.04",
+		"WSL:Ubuntu",
+	}
 
 	-- 默认的长宽
 	config.initial_cols = 161
@@ -55,10 +58,19 @@ return function(wezterm, config)
 	}
 
 	config.wsl_domains = wezterm.default_wsl_domains()
+	local matched_default_wsl_domain = nil
 	for _, domain in ipairs(config.wsl_domains) do
-		if domain.name == default_wsl_domain then
-			domain.default_cwd = config_root
+		for _, candidate in ipairs(default_wsl_domains) do
+			if domain.name == candidate then
+				domain.default_cwd = config_root
+				if not matched_default_wsl_domain then
+					matched_default_wsl_domain = candidate
+				end
+				break
+			end
 		end
 	end
-	config.default_domain = default_wsl_domain
+	if matched_default_wsl_domain then
+		config.default_domain = matched_default_wsl_domain
+	end
 end
