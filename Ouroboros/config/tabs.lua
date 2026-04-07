@@ -233,10 +233,12 @@ return function(wezterm, config)
 	end
 
 	local STYLES = {
+		-- Rounded capsule tabs using the KevinSilvester-inspired Catppuccin palette.
 		capsule = {
 			tab_bar = ui.colors.tab_bar,
 			render = render_capsule_style,
 		},
+		-- Sharp retro powerline tabs with black/yellow/gray segmented arrows.
 		powerline = {
 			tab_bar = POWERLINE_TAB_BAR_COLORS,
 			render = render_powerline_style,
