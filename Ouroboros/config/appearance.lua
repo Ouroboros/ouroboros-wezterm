@@ -25,6 +25,7 @@ return function(wezterm, config)
 
 	config.colors = ui.colors
 	config.background = ui.background_layers()
+	ui.register_background_rotation()
 
 	config.enable_scroll_bar = true
 	config.enable_tab_bar = true

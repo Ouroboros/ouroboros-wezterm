@@ -29,6 +29,8 @@ ui.backdrop_dirs = {
 	"C:\\Users\\Arianrhod\\.config\\wezterm\\KevinSilvester\\backdrops",
 }
 
+ui.backdrop_rotate_interval_seconds = 60 * 60
+
 ui.mocha = {
 	rosewater = "#f5e0dc",
 	flamingo = "#f2cdcd",
@@ -203,10 +205,8 @@ local function load_backdrops()
 	return backdrops
 end
 
-function ui.background_layers()
-	local images = load_backdrops()
-	if #images == 0 then
-		selected_backdrop = nil
+local function background_layers_for_file(path)
+	if not path then
 		return {
 			{
 				source = { Color = ui.colors.background },
@@ -214,11 +214,9 @@ function ui.background_layers()
 		}
 	end
 
-	selected_backdrop = images[math.random(#images)]
-
 	return {
 		{
-			source = { File = selected_backdrop },
+			source = { File = path },
 			horizontal_align = "Center",
 		},
 		{
@@ -230,6 +228,121 @@ function ui.background_layers()
 			opacity = 1,
 		},
 	}
+end
+
+local function pick_random_backdrop()
+	local images = load_backdrops()
+	if #images == 0 then
+		selected_backdrop = nil
+		return nil
+	end
+
+	if #images == 1 then
+		selected_backdrop = images[1]
+		return selected_backdrop
+	end
+
+	local previous_backdrop = selected_backdrop
+	repeat
+		selected_backdrop = images[math.random(#images)]
+	until selected_backdrop ~= previous_backdrop
+
+	return selected_backdrop
+end
+
+function ui.background_layers()
+	return background_layers_for_file(pick_random_backdrop())
+end
+
+local function window_global_key(prefix, window)
+	local ok, window_id = pcall(function()
+		return window:window_id()
+	end)
+
+	if ok and window_id then
+		return prefix .. tostring(window_id)
+	end
+
+	return prefix .. tostring(window)
+end
+
+function ui.apply_random_background(window)
+	if not window then
+		return
+	end
+
+	local overrides = window:get_config_overrides() or {}
+	overrides.background = ui.background_layers()
+
+	if wezterm.GLOBAL then
+		wezterm.GLOBAL[window_global_key("ouroboros_background_rotation_ignore_", window)] = true
+	end
+
+	window:set_config_overrides(overrides)
+end
+
+function ui.start_background_rotation(window)
+	local can_rotate = ui.backdrop_rotate_interval_seconds > 0
+		and wezterm.GLOBAL
+		and wezterm.time
+		and wezterm.time.call_after
+
+	if not can_rotate or not window then
+		return
+	end
+
+	local global = wezterm.GLOBAL
+	local generation_key = window_global_key("ouroboros_background_rotation_generation_", window)
+	global[generation_key] = (global[generation_key] or 0) + 1
+	local generation = global[generation_key]
+
+	local function tick()
+		if global[generation_key] ~= generation then
+			return
+		end
+
+		ui.apply_random_background(window)
+
+		wezterm.time.call_after(ui.backdrop_rotate_interval_seconds, tick)
+	end
+
+	wezterm.time.call_after(ui.backdrop_rotate_interval_seconds, tick)
+end
+
+function ui.start_background_rotation_for_all_windows()
+	if not wezterm.gui or not wezterm.gui.gui_windows then
+		return
+	end
+
+	local ok, windows = pcall(wezterm.gui.gui_windows)
+	if not ok or not windows then
+		return
+	end
+
+	for _, window in ipairs(windows) do
+		ui.start_background_rotation(window)
+	end
+end
+
+function ui.register_background_rotation()
+	if not wezterm.on then
+		return
+	end
+
+	wezterm.on("gui-attached", function()
+		ui.start_background_rotation_for_all_windows()
+	end)
+
+	wezterm.on("window-config-reloaded", function(window, _pane)
+		local ignore_key = window_global_key("ouroboros_background_rotation_ignore_", window)
+		if wezterm.GLOBAL and wezterm.GLOBAL[ignore_key] then
+			wezterm.GLOBAL[ignore_key] = nil
+			return
+		end
+
+		ui.apply_random_background(window)
+		ui.start_background_rotation(window)
+	end)
 end
 
 function ui.clean_process_name(proc)
