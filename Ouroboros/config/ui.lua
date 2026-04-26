@@ -26,6 +26,7 @@ local BACKDROP_BLACKLIST = {
 
 ui.backdrop_dirs = {
 	"E:\\Document\\pic\\background",
+	"C:\\Users\\Arianrhod\\Pictures\\Spotlight Wallpapers",
 	"C:\\Users\\Arianrhod\\.config\\wezterm\\KevinSilvester\\backdrops",
 }
 
