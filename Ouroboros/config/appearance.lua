@@ -11,7 +11,10 @@ return function(wezterm, config)
 	config.initial_rows = 35
 
 	config.window_decorations = "RESIZE"
-	config.font = wezterm.font("JetBrains Mono", { weight = "Bold", italic = true })
+	config.font = wezterm.font_with_fallback({
+		{ family = "JetBrains Mono", weight = "Bold", italic = true },
+		{ family = "Microsoft YaHei", weight = "Bold" },
+	})
 	config.font_size = 12
 	config.freetype_load_target = "Normal"
 	config.freetype_render_target = "Normal"
