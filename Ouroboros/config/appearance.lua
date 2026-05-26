@@ -13,9 +13,9 @@ return function(wezterm, config)
 	config.window_decorations = "RESIZE"
 	config.font = wezterm.font_with_fallback({
 		{ family = "JetBrains Mono", weight = "Bold", italic = true },
-		{ family = "Microsoft YaHei", weight = "Bold" },
+		{ family = "YaHei Consolas Hybrid" },
 	})
-	config.font_size = 12
+	config.font_size = 12.5
 	config.freetype_load_target = "Normal"
 	config.freetype_render_target = "Normal"
 
