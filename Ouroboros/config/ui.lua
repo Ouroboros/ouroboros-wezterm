@@ -19,15 +19,18 @@ local IMAGE_EXTENSIONS = {
 }
 local BACKDROP_BLACKLIST = {
 	["/skyrim/alduinwalllarge.jpg"] = true,
+	["/アカメが斬る！/akame_ga_kill-15.jpg"] = true,
+	["/アカメが斬る！/dayi78q-17248000-6f4a-4e7a-a769-9a0e71387951.jpg"] = true,
 	-- ["/skyrim/skyrim_fanart_4k_by_stonez4x-d8fw4n9.jpg"] = true,
 	-- ["/skyrim/solitude.jpg"] = true,
 	-- ["/英雄傳說 閃之軌跡Ⅳ -the end of saga-/celestialglobe.png"] = true,
 }
 
 ui.backdrop_dirs = {
-	"E:\\Document\\pic\\background",
-	"C:\\Users\\Arianrhod\\Pictures\\Spotlight Wallpapers",
-	"C:\\Users\\Arianrhod\\.config\\wezterm\\KevinSilvester\\backdrops",
+	"E:\\Document\\Images\\アカメが斬る！",
+	-- "E:\\Document\\pic\\background",
+	-- "C:\\Users\\Arianrhod\\Pictures\\Spotlight Wallpapers",
+	-- "C:\\Users\\Arianrhod\\.config\\wezterm\\KevinSilvester\\backdrops",
 }
 
 ui.backdrop_rotate_interval_seconds = 60 * 60
