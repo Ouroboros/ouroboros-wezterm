@@ -4,6 +4,7 @@ set -Eeuo pipefail
 
 readonly SSH_TARGET="${PI_HOST_SSH_TARGET:-Arianrhod@10.238.0.117}"
 readonly WSL_DISTRO="${PI_HOST_WSL_DISTRO:-Ubuntu-22.04}"
+readonly WSL_CWD="${PI_HOST_WSL_CWD:-$(pwd -P)}"
 
 [[ "$SSH_TARGET" != *[[:space:]]* ]] || {
     printf 'error: PI_HOST_SSH_TARGET must not contain whitespace\n' >&2
@@ -13,10 +14,21 @@ readonly WSL_DISTRO="${PI_HOST_WSL_DISTRO:-Ubuntu-22.04}"
     printf 'error: invalid PI_HOST_WSL_DISTRO: %s\n' "$WSL_DISTRO" >&2
     exit 1
 }
+[[ "$WSL_CWD" == /* ]] || {
+    printf 'error: WSL cwd must be an absolute path: %s\n' "$WSL_CWD" >&2
+    exit 1
+}
+case "$WSL_CWD" in
+    *['"&|<>^%!']*)
+        printf 'error: WSL cwd contains unsupported Windows shell characters: %s\n' "$WSL_CWD" >&2
+        exit 1
+        ;;
+esac
+
 exec env ssh \
     -o UserKnownHostsFile=/dev/null \
     -o StrictHostKeyChecking=no \
     -o ServerAliveInterval=30 \
     -o ServerAliveCountMax=3 \
     -t "$SSH_TARGET" \
-    "wsl.exe -d $WSL_DISTRO"
+    "wsl.exe -d $WSL_DISTRO --cd \"$WSL_CWD\""
