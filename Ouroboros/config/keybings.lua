@@ -58,6 +58,8 @@ return function(wezterm, config)
     { key = 'RightArrow', mods = 'ALT',   action = wezterm.action.AdjustPaneSize { "Right", 5 } },
     { key = 'L',          mods = 'ALT',   action = wezterm.action.ActivateTabRelative(1) },
     { key = 'H',          mods = 'ALT',   action = wezterm.action.ActivateTabRelative(-1) },
+    { key = 'F1',         mods = 'NONE',  action = wezterm.action.ActivateTabRelative(-1) },
+    { key = 'F2',         mods = 'NONE',  action = wezterm.action.ActivateTabRelative(1) },
   }
 
   for i = 1, 9 do
