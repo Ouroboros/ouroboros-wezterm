@@ -9,10 +9,7 @@ die() {
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") [--tmux38] <command>
-
-Options:
-  --tmux38  Use the pinned tmux next-3.8 build on the pi-3.8 socket.
+Usage: $(basename "$0") <command>
 
 Commands:
   start   Start this directory's tmux session with pi -r, without attaching.
@@ -25,22 +22,17 @@ Environment:
   PI_TMUX_CWD      Override the project directory.
   PI_TMUX_SESSION  Override the generated tmux session name.
   PI_TMUX_WINDOW   Override the tmux window name (default: pi).
-  PI_TMUX_BIN       Override the tmux 3.7c binary.
-  PI_TMUX_SOCKET    Override the tmux 3.7c socket name (default: pi-3.7c).
-  PI_TMUX38_BIN     Override the tmux next-3.8 binary.
-  PI_TMUX38_SOCKET  Override the tmux next-3.8 socket name (default: pi-3.8).
+  PI_TMUX_BIN      Override the tmux next-3.8 binary.
+  PI_TMUX_SOCKET   Override the tmux socket name (default: pi-3.8).
 EOF
 }
 
 readonly DEFAULT_TMUX_BIN='/usr/local/bin/tmux'
-readonly DEFAULT_TMUX_SOCKET='pi-3.7c'
-readonly DEFAULT_TMUX38_BIN='/root/.local/src/tmux-3.8-dev-40381bdc/tmux'
-readonly DEFAULT_TMUX38_SOCKET='pi-3.8'
+readonly DEFAULT_TMUX_SOCKET='pi-3.8'
 
-USE_TMUX38=false
 TMUX_BIN=''
 TMUX_SOCKET=''
-TMUX_LABEL=''
+TMUX_LABEL='tmux next-3.8'
 TMUX_ARGS=()
 
 command -v cksum >/dev/null 2>&1 || die 'cksum is not installed'
@@ -60,25 +52,15 @@ readonly SESSION_HASH
 readonly SESSION="${PI_TMUX_SESSION:-pi-${SESSION_LABEL}-${SESSION_HASH}}"
 
 configure_tmux() {
-    local expected_version
     local version
 
-    if "$USE_TMUX38"; then
-        TMUX_BIN="${PI_TMUX38_BIN:-$DEFAULT_TMUX38_BIN}"
-        TMUX_SOCKET="${PI_TMUX38_SOCKET:-$DEFAULT_TMUX38_SOCKET}"
-        TMUX_LABEL='tmux next-3.8'
-        expected_version='tmux next-3.8'
-    else
-        TMUX_BIN="${PI_TMUX_BIN:-$DEFAULT_TMUX_BIN}"
-        TMUX_SOCKET="${PI_TMUX_SOCKET:-$DEFAULT_TMUX_SOCKET}"
-        TMUX_LABEL='tmux 3.7c'
-        expected_version='tmux 3.7c'
-    fi
+    TMUX_BIN="${PI_TMUX_BIN:-$DEFAULT_TMUX_BIN}"
+    TMUX_SOCKET="${PI_TMUX_SOCKET:-$DEFAULT_TMUX_SOCKET}"
 
     [[ -x "$TMUX_BIN" ]] || die "$TMUX_LABEL is not executable: $TMUX_BIN"
     [[ "$TMUX_SOCKET" =~ ^[[:alnum:]_.-]+$ ]] || die "invalid tmux socket name: $TMUX_SOCKET"
     version="$("$TMUX_BIN" -V)" || die "failed to execute tmux: $TMUX_BIN"
-    [[ "$version" == "$expected_version" ]] || die "$expected_version is required, found: $version"
+    [[ "$version" == "$TMUX_LABEL" ]] || die "$TMUX_LABEL is required, found: $version"
     TMUX_ARGS=(-L "$TMUX_SOCKET")
 }
 
@@ -86,19 +68,15 @@ tmux_command() {
     "$TMUX_BIN" "${TMUX_ARGS[@]}" "$@"
 }
 
-session_exists() {
-    tmux_command has-session -t "$SESSION" 2>/dev/null
+configure_copy_mode() {
+    tmux_command set-option -s set-clipboard on >/dev/null
+    tmux_command bind-key -T root MouseDrag1Pane copy-mode -M
+    tmux_command bind-key -T copy-mode MouseDragEnd1Pane send-keys -X copy-selection-no-clear
+    tmux_command bind-key -T copy-mode-vi MouseDragEnd1Pane send-keys -X copy-selection-no-clear
 }
 
-stable_session_exists() {
-    local stable_bin
-    local stable_socket
-
-    "$USE_TMUX38" || return 1
-    stable_bin="${PI_TMUX_BIN:-$DEFAULT_TMUX_BIN}"
-    stable_socket="${PI_TMUX_SOCKET:-$DEFAULT_TMUX_SOCKET}"
-    [[ -x "$stable_bin" ]] || return 1
-    "$stable_bin" -L "$stable_socket" has-session -t "$SESSION" 2>/dev/null
+session_exists() {
+    tmux_command has-session -t "$SESSION" 2>/dev/null
 }
 
 require_session() {
@@ -124,11 +102,9 @@ start_session() {
     local start_command
 
     if session_exists; then
+        configure_copy_mode
         printf 'tmux session already running: %s\n' "$SESSION"
         return
-    fi
-    if stable_session_exists; then
-        die "tmux 3.7c session is still running: $SESSION; stop it explicitly before starting --tmux38"
     fi
 
     pi_bin="$(command -v pi)" || die 'pi is not available on PATH'
@@ -140,12 +116,14 @@ start_session() {
         -c "$WORKDIR" \
         "$start_command"
     tmux_command set-option -t "$SESSION" mouse on >/dev/null
+    configure_copy_mode
 
     printf 'tmux session started: %s\n' "$SESSION"
 }
 
 attach_session() {
     require_session
+    configure_copy_mode
     require_interactive_terminal
     require_compatible_attach_context
 
@@ -187,9 +165,6 @@ main() {
 
     while (($# > 0)); do
         case "$1" in
-            --tmux38)
-                USE_TMUX38=true
-                ;;
             start|attach|open|status|stop|help|-h|--help)
                 "$action_set" && die "unexpected argument: $1"
                 action="$1"
